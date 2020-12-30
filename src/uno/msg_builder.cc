@@ -71,6 +71,20 @@ ProviderMsgPtr MsgBuilder::CreateNotifyMsgArgs(int seqId, ErrorNumber err,
     return msg;
 }
 
+ProviderMsgPtr MsgBuilder::CreateUserOperationArgs(int seqId, int roomId,
+    int userId, const UserOperation &custom)
+{
+    auto msg = std::make_shared<ProviderMsg>();
+    msg->set_sequenceid(seqId);
+
+    auto args = msg->mutable_useroperationargs();
+    args->set_roomid(roomId);
+    args->set_userid(userId);
+    args->mutable_custom()->PackFrom(custom);
+
+    return msg;
+}
+
 NotifyMsg MsgBuilder::CreateGameStart(const InitHandcardsT &initHandcards, 
     Card flippedCard, int firstPlayer) 
 {
@@ -92,6 +106,14 @@ NotifyMsg MsgBuilder::CreateDraw(const Draw &draw)
     return msg;
 }
 
+UserOperation MsgBuilder::CreateDraw(int number)
+{
+    UserOperation msg;
+    auto draw = msg.mutable_draw();
+    draw->set_number(number);
+    return msg;
+}
+
 NotifyMsg MsgBuilder::CreateSkip(const Skip &skip)
 {
     NotifyMsg msg;
@@ -99,10 +121,26 @@ NotifyMsg MsgBuilder::CreateSkip(const Skip &skip)
     return msg;
 }
 
+UserOperation MsgBuilder::CreateSkip()
+{
+    UserOperation msg;
+    msg.mutable_skip();
+    return msg;
+}
+
 NotifyMsg MsgBuilder::CreatePlay(const Play &play)
 {
     NotifyMsg msg;
     msg.mutable_play()->CopyFrom(play);
+    return msg;
+}
+
+UserOperation MsgBuilder::CreatePlay(Card card, CardColor color)
+{
+    UserOperation msg;
+    auto play = msg.mutable_play();
+    play->mutable_card()->CopyFrom(card.ConvertToGrpcCard());
+    play->set_nextcolor(color);
     return msg;
 }
 
