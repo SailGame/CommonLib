@@ -25,9 +25,14 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 set(_GRPC_GRPCPP gRPC::grpc++)
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
+option(BUILD_UNO_LIB OFF)
+
+# if this file is in top directory
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    set(BUILD_UNO_LIB ON)
+endif()
+
 # Proto file
-# get_filename_component(proto_path "${CMAKE_CURRENT_SOURCE_DIR}/hello.proto" ABSOLUTE)
-# get_filename_component(proto_dir "${proto_path}" DIRECTORY)
 set(core_proto_dir "${CMAKE_CURRENT_SOURCE_DIR}/proto/core")
 set(uno_proto_dir "${CMAKE_CURRENT_SOURCE_DIR}/proto/uno")
 set(proto_dir "${CMAKE_CURRENT_SOURCE_DIR}/proto")
@@ -42,45 +47,41 @@ set(proto_files
 )
 
 # Generated sources
+# TODO: conditional build
 list(APPEND proto_srcs 
-    "${CMAKE_CURRENT_BINARY_DIR}/core/core.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/error.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/provider.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/types.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/uno/uno.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/core.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/error.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/provider.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/types.pb.cc"
+    "${CMAKE_BINARY_DIR}/uno/uno.pb.cc"
 )
 list(APPEND proto_hdrs 
-    "${CMAKE_CURRENT_BINARY_DIR}/core/core.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/error.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/provider.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/types.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/uno/uno.pb.h"
+    "${CMAKE_BINARY_DIR}/core/core.pb.h"
+    "${CMAKE_BINARY_DIR}/core/error.pb.h"
+    "${CMAKE_BINARY_DIR}/core/provider.pb.h"
+    "${CMAKE_BINARY_DIR}/core/types.pb.h"
+    "${CMAKE_BINARY_DIR}/uno/uno.pb.h"
 )
 list(APPEND grpc_srcs 
-    "${CMAKE_CURRENT_BINARY_DIR}/core/core.grpc.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/error.grpc.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/provider.grpc.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/types.grpc.pb.cc"
-    "${CMAKE_CURRENT_BINARY_DIR}/uno/uno.grpc.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/core.grpc.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/error.grpc.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/provider.grpc.pb.cc"
+    "${CMAKE_BINARY_DIR}/core/types.grpc.pb.cc"
+    "${CMAKE_BINARY_DIR}/uno/uno.grpc.pb.cc"
 )
 list(APPEND grpc_hdrs 
-    "${CMAKE_CURRENT_BINARY_DIR}/core/core.grpc.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/error.grpc.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/provider.grpc.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/core/types.grpc.pb.h"
-    "${CMAKE_CURRENT_BINARY_DIR}/uno/uno.grpc.pb.h"
+    "${CMAKE_BINARY_DIR}/core/core.grpc.pb.h"
+    "${CMAKE_BINARY_DIR}/core/error.grpc.pb.h"
+    "${CMAKE_BINARY_DIR}/core/provider.grpc.pb.h"
+    "${CMAKE_BINARY_DIR}/core/types.grpc.pb.h"
+    "${CMAKE_BINARY_DIR}/uno/uno.grpc.pb.h"
 )
-
-# Include generated *.pb.h files
-include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 
 add_custom_command(
     OUTPUT ${proto_srcs} ${proto_hdrs} ${grpc_srcs} ${grpc_hdrs}
     COMMAND ${_PROTOBUF_PROTOC}
-    ARGS --grpc_out=generate_mock_code=true:"${CMAKE_CURRENT_BINARY_DIR}"
-    --cpp_out "${CMAKE_CURRENT_BINARY_DIR}"
-    # -I "${core_proto_dir}"
-    # -I "${uno_proto_dir}"
+    ARGS --grpc_out=generate_mock_code=true:"${CMAKE_BINARY_DIR}"
+    --cpp_out "${CMAKE_BINARY_DIR}"
     -I "${proto_dir}"
     --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
     # here should be absolute path
@@ -91,5 +92,6 @@ set_source_files_properties(${proto_srcs} ${grpc_srcs} PROPERTIES GENERATED TRUE
 
 add_library(uno_proto_lib ${proto_srcs} ${grpc_srcs})
 target_link_libraries(uno_proto_lib ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+target_include_directories(uno_proto_lib PUBLIC "${CMAKE_BINARY_DIR}")
 
 add_subdirectory(src)
