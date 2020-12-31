@@ -14,6 +14,8 @@ include(cmake/grpc.cmake)
 
 option(BUILD_UNO_LIB OFF)
 option(BUILD_TEXAS_LIB OFF)
+option(IMPORT_GRPC_BY_SUBMODULE OFF)
+option(IMPORT_GRPC_BY_FETCHCONTENT OFF)
 
 # if this file is in top directory
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -38,7 +40,7 @@ set(pb_dir "${CMAKE_BINARY_DIR}/sailgame_pb")
 file(MAKE_DIRECTORY "${pb_dir}")
 add_pb_files("${proto_files}")
 
-import_grpc_by_preinstalled()
+import_grpc()
 add_custom_command(
     OUTPUT ${pb_srcs} ${pb_hdrs}
     COMMAND ${_PROTOBUF_PROTOC}
