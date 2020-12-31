@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+include(cmake/utils.cmake)
+
 find_package(Threads REQUIRED)
 
 set(protobuf_MODULE_COMPATIBLE TRUE)
@@ -34,7 +36,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(BUILD_TEXAS_LIB ON)
 endif()
 
-# Proto file
+# Proto files
 set(proto_dir "${CMAKE_CURRENT_SOURCE_DIR}/proto")
 file(GLOB proto_files ${proto_dir}/core/*.proto)
 if(BUILD_UNO_LIB)
@@ -48,20 +50,7 @@ endif()
 
 # Generated pb files
 set(pb_dir "${CMAKE_BINARY_DIR}")
-file(GLOB pb_hdrs ${pb_dir}/core/*.pb.h)
-file(GLOB pb_srcs ${pb_dir}/core/*.pb.cc)
-if(BUILD_UNO_LIB)
-    file(GLOB uno_pb_hdrs ${pb_dir}/uno/*.pb.h)
-    file(GLOB uno_pb_srcs ${pb_dir}/uno/*.pb.cc)
-    list(APPEND pb_hdrs ${uno_pb_hdrs})
-    list(APPEND pb_srcs ${uno_pb_srcs})
-endif()
-if(BUILD_UNO_LIB)
-    file(GLOB texas_pb_hdrs ${pb_dir}/texas/*.pb.h)
-    file(GLOB texas_pb_srcs ${pb_dir}/texas/*.pb.cc)
-    list(APPEND pb_hdrs ${texas_pb_hdrs})
-    list(APPEND pb_srcs ${texas_pb_srcs})
-endif()
+add_pb_files("${proto_files}")
 
 add_custom_command(
     OUTPUT ${pb_srcs} ${pb_hdrs}
@@ -76,8 +65,8 @@ add_custom_command(
 )
 set_source_files_properties(${pb_srcs} PROPERTIES GENERATED TRUE)
 
-add_library(uno_pb_lib ${pb_srcs})
-target_include_directories(uno_pb_lib PUBLIC ${pb_dir})
-target_link_libraries(uno_pb_lib ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+add_library(pb_lib ${pb_srcs})
+target_include_directories(pb_lib PUBLIC ${pb_dir})
+target_link_libraries(pb_lib ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 add_subdirectory(src)
