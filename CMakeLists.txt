@@ -10,22 +10,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 
 include(cmake/utils.cmake)
-
-find_package(Threads REQUIRED)
-
-set(protobuf_MODULE_COMPATIBLE TRUE)
-find_package(Protobuf CONFIG REQUIRED)
-message(STATUS "Using protobuf ${Protobuf_VERSION}")
-
-set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-set(_REFLECTION gRPC::grpc++_reflection)
-set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
-
-find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Using gRPC ${gRPC_VERSION}")
-
-set(_GRPC_GRPCPP gRPC::grpc++)
-set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
+include(cmake/grpc.cmake)
 
 option(BUILD_UNO_LIB OFF)
 option(BUILD_TEXAS_LIB OFF)
@@ -52,6 +37,7 @@ endif()
 set(pb_dir "${CMAKE_BINARY_DIR}")
 add_pb_files("${proto_files}")
 
+import_grpc_by_preinstalled()
 add_custom_command(
     OUTPUT ${pb_srcs} ${pb_hdrs}
     COMMAND ${_PROTOBUF_PROTOC}
@@ -67,6 +53,7 @@ set_source_files_properties(${pb_srcs} PROPERTIES GENERATED TRUE)
 
 add_library(pb_lib ${pb_srcs})
 target_include_directories(pb_lib PUBLIC ${pb_dir})
-target_link_libraries(pb_lib ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
+target_link_libraries(pb_lib PUBLIC 
+    ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 add_subdirectory(src)
