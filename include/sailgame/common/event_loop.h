@@ -5,7 +5,7 @@
 #include <queue>
 #include <mutex>
 
-#include <core/provider.pb.h>
+#include <sailgame_pb/core/provider.pb.h>
 
 #include "types.h"
 

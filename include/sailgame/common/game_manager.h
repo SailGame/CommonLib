@@ -2,7 +2,8 @@
 
 #include <functional>
 #include <thread>
-#include <core/provider.pb.h>
+
+#include <sailgame_pb/core/provider.pb.h>
 
 #include "event_loop.h"
 #include "network_interface.h"

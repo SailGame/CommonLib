@@ -9,8 +9,9 @@
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
-#include <core/provider.pb.h>
-#include <core/core.grpc.pb.h>
+
+#include <sailgame_pb/core/provider.pb.h>
+#include <sailgame_pb/core/core.grpc.pb.h>
 
 #include "types.h"
 

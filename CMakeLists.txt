@@ -34,15 +34,16 @@ if(BUILD_TEXAS_LIB)
 endif()
 
 # Generated pb files
-set(pb_dir "${CMAKE_BINARY_DIR}")
+set(pb_dir "${CMAKE_BINARY_DIR}/sailgame_pb")
+file(MAKE_DIRECTORY "${pb_dir}")
 add_pb_files("${proto_files}")
 
 import_grpc_by_preinstalled()
 add_custom_command(
     OUTPUT ${pb_srcs} ${pb_hdrs}
     COMMAND ${_PROTOBUF_PROTOC}
-    ARGS --grpc_out=generate_mock_code=true:"${CMAKE_BINARY_DIR}"
-    --cpp_out "${CMAKE_BINARY_DIR}"
+    ARGS --grpc_out=generate_mock_code=true:"${pb_dir}"
+    --cpp_out "${pb_dir}"
     -I "${proto_dir}"
     --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
     # here should be absolute path
@@ -52,7 +53,8 @@ add_custom_command(
 set_source_files_properties(${pb_srcs} PROPERTIES GENERATED TRUE)
 
 add_library(pb_lib ${pb_srcs})
-target_include_directories(pb_lib PUBLIC ${pb_dir})
+# use "#include <sailgame_pb/core/core.pb.h>"
+target_include_directories(pb_lib PUBLIC ${CMAKE_BINARY_DIR})
 target_link_libraries(pb_lib PUBLIC 
     ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <core/provider.pb.h>
-#include <core/error.pb.h>
-#include <uno/uno.pb.h>
+#include <sailgame_pb/core/provider.pb.h>
+#include <sailgame_pb/core/error.pb.h>
+#include <sailgame_pb/uno/uno.pb.h>
 
 #include "card.h"
 #include "../common/types.h"

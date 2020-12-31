@@ -1,4 +1,4 @@
-#include <uno/card.h>
+#include <sailgame/uno/card.h>
 
 namespace SailGame { namespace Game {
 

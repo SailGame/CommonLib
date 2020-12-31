@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <random>
 
-#include <uno/uno.pb.h>
+#include <sailgame_pb/uno/uno.pb.h>
 
 namespace SailGame { namespace Game {
 
