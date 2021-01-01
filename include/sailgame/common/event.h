@@ -32,8 +32,15 @@ struct ProviderMsgEvent : public Event {
     ProviderMsg mMsg;
 };
 
-struct BroadcastMsgEvent {};
+struct BroadcastMsgEvent : public Event {
+    BroadcastMsgEvent(const BroadcastMsg &msg)
+        : Event(EventType::BROADCAST_MSG), mMsg(msg) {}
 
-struct UserInputEvent {};
+    BroadcastMsg mMsg;
+};
+
+struct UserInputEvent :public Event {
+    UserInputEvent() : Event(EventType::USER_INPUT) {}
+};
 
 }}

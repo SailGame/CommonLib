@@ -61,9 +61,13 @@ public:
                 break;
             }
             case EventType::BROADCAST_MSG: {
+                auto msg = std::dynamic_pointer_cast<BroadcastMsgEvent>(event)->mMsg;
+                mStateMachine->TransitionForBroadcastMsg(msg);
                 break;
             }
             case EventType::USER_INPUT: {
+                auto operationArgs = mStateMachine->TransitionForUserInput(event);
+                mNetworkInterface->SendOperationInRoomArgs(*operationArgs);
                 break;
             }
             default:

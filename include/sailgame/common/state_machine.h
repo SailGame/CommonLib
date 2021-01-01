@@ -20,6 +20,16 @@ public:
         throw std::runtime_error("Unsupported msg type");
     }
 
+    template<typename MsgT>
+    void TransitionForBroadcastMsg(const MsgT &event) {
+        throw std::runtime_error("Unsupported msg type");
+    }
+
+    template<typename EventT>
+    OperationInRoomArgsPtr TransitionForUserInput(const EventT &event) {
+        throw std::runtime_error("Unsupported event type");
+    }
+
     const StateT &GetState() const { return mState; } 
 
 private:

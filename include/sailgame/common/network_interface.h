@@ -11,6 +11,7 @@
 #include <grpcpp/security/credentials.h>
 
 #include <sailgame_pb/core/provider.pb.h>
+#include <sailgame_pb/core/types.pb.h>
 #include <sailgame_pb/core/core.grpc.pb.h>
 
 #include "types.h"
@@ -27,6 +28,7 @@ using grpc::ClientReaderWriterInterface;
 using grpc::ClientWriter;
 using grpc::Status;
 using Core::ProviderMsg;
+using Core::OperationInRoomArgs;
 using Core::GameCore;
 
 class NetworkInterfaceSubscriber {
@@ -86,8 +88,23 @@ public:
     }
 
     void AsyncSendMsg(const ProviderMsg &msg) {
-        mStream->Write(msg);
-        spdlog::info("msg sent, type = {}", msg.Msg_case());
+        if constexpr (IsProvider) {
+            mStream->Write(msg);
+            spdlog::info("msg sent, type = {}", msg.Msg_case());
+        }
+        else {
+            throw std::runtime_error("Client cannot send ProviderMsg.");
+        }
+    }
+
+    /// XXX: how to adapt to all msgs
+    void SendOperationInRoomArgs(const OperationInRoomArgs &args) {
+        if constexpr (!IsProvider) {
+            mStream->Write(args);
+        }
+        else {
+            throw std::runtime_error("Provider cannot send OperationInRoomArgs.");
+        }
     }
 
     MsgT ReceiveMsg()
@@ -117,7 +134,7 @@ public:
 private:
     ClientContext mContext;
     std::shared_ptr<GameCore::StubInterface> mStub;
-    std::shared_ptr<ClientReaderWriterInterface<ProviderMsg, ProviderMsg>> mStream;
+    std::shared_ptr<StreamT> mStream;
     std::unique_ptr<std::thread> mListenThread;
     NetworkInterfaceSubscriber *mSubscriber{nullptr};
 };
