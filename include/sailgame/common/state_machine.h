@@ -16,7 +16,7 @@ public:
     }
 
     template<typename MsgT>
-    ProviderMsgPtrs Transition(const MsgT &event) {
+    ProviderMsgPtrs TransitionForProviderMsg(const MsgT &event) {
         throw std::runtime_error("Unsupported msg type");
     }
 

@@ -14,6 +14,8 @@
 #include <sailgame_pb/core/core.grpc.pb.h>
 
 #include "types.h"
+#include "event.h"
+#include "util.h"
 
 namespace SailGame { namespace Common {
 
@@ -29,10 +31,16 @@ using Core::GameCore;
 
 class NetworkInterfaceSubscriber {
 public:
-    virtual void OnEventHappens(const ProviderMsgPtr &) = 0;
+    virtual void OnEventHappens(const EventPtr &) = 0;
 };
 
+template <bool IsProvider>
 class NetworkInterface {
+private:
+    using MsgT = get_msg_t<IsProvider>;
+    using StreamT = get_stream_t<IsProvider>;
+    using EventT = get_event_t<IsProvider>;
+
 public:
     NetworkInterface(const std::shared_ptr<GameCore::StubInterface> &stub) 
         : mStub(stub)
@@ -49,7 +57,12 @@ public:
     }
 
     void Connect() {
-        mStream = mStub->Provider(&mContext);
+        if constexpr (IsProvider) {
+            mStream = mStub->Provider(&mContext);
+        }
+        else {
+            // mStream = mStub->Listen(&mContext, /*listenArgs*/);
+        }
     }
 
     bool IsConnected() const {
@@ -72,14 +85,14 @@ public:
         spdlog::info("listen thread created");
     }
 
-    void SendMsg(const ProviderMsg &msg) {
+    void AsyncSendMsg(const ProviderMsg &msg) {
         mStream->Write(msg);
         spdlog::info("msg sent, type = {}", msg.Msg_case());
     }
 
-    ProviderMsg ReceiveMsg()
+    MsgT ReceiveMsg()
     {
-        ProviderMsg msg;
+        MsgT msg;
         if (mStream->Read(&msg)) {
             return msg;
         }
@@ -92,8 +105,8 @@ public:
         return msg;
     }
 
-    void OnEventHappens(const ProviderMsg &msg) {
-        mSubscriber->OnEventHappens(std::make_shared<ProviderMsg>(msg));
+    void OnEventHappens(const MsgT &msg) {
+        mSubscriber->OnEventHappens(std::make_shared<EventT>(msg));
         spdlog::info("msg received, type = {}", msg.Msg_case());
     }
 

@@ -13,14 +13,14 @@ namespace SailGame { namespace Common {
 
 using Core::ProviderMsg;
 
-template<typename StateT>
+template<typename StateT, bool IsProvider>
 class GameManager : 
     public EventLoopSubscriber, 
     public NetworkInterfaceSubscriber {
 public:
     GameManager(const std::shared_ptr<EventLoop> &eventLoop, 
         const std::shared_ptr<StateMachine<StateT>> &stateMachine,
-        const std::shared_ptr<NetworkInterface> &networkInterface)
+        const std::shared_ptr<NetworkInterface<IsProvider>> &networkInterface)
         : mEventLoop(eventLoop), mStateMachine(stateMachine),
         mNetworkInterface(networkInterface)
     {
@@ -42,18 +42,32 @@ public:
 
     void StartWithRegisterArgs(const ProviderMsgPtr &msg) {
         mNetworkInterface->AsyncListen();
-        mNetworkInterface->SendMsg(*msg);
+        mNetworkInterface->AsyncSendMsg(*msg);
         mEventLoop->StartLoop();
     }
 
-    void OnEventHappens(const ProviderMsgPtr &event) override {
+    void OnEventHappens(const EventPtr &event) override {
         mEventLoop->AppendEvent(event);
     }
 
-    void OnEventProcessed(const ProviderMsgPtr &event) override {
-        auto notifyMsgs = mStateMachine->Transition(*event);
-        for (const auto &msg : notifyMsgs) {
-            mNetworkInterface->SendMsg(*msg);
+    void OnEventProcessed(const EventPtr &event) override {
+        switch (event->mType) {
+            case EventType::PROVIDER_MSG: {
+                auto msg = std::dynamic_pointer_cast<ProviderMsgEvent>(event)->mMsg;
+                auto notifyMsgs = mStateMachine->TransitionForProviderMsg(msg);
+                for (const auto &msg : notifyMsgs) {
+                    mNetworkInterface->AsyncSendMsg(*msg);
+                }
+                break;
+            }
+            case EventType::BROADCAST_MSG: {
+                break;
+            }
+            case EventType::USER_INPUT: {
+                break;
+            }
+            default:
+                throw std::runtime_error("Unsupported event type.");
         }
     }
 
@@ -61,6 +75,6 @@ public:
 private:
     std::shared_ptr<EventLoop> mEventLoop;
     std::shared_ptr<StateMachine<StateT>> mStateMachine;
-    std::shared_ptr<NetworkInterface> mNetworkInterface;
+    std::shared_ptr<NetworkInterface<IsProvider>> mNetworkInterface;
 };
 }}

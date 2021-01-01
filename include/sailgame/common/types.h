@@ -5,10 +5,16 @@
 
 namespace Core {
 struct ProviderMsg;
+struct UserOperation;
 }
 
 namespace SailGame { namespace Common {
 
+struct Event;
 using ProviderMsgPtr = std::shared_ptr<Core::ProviderMsg>;
 using ProviderMsgPtrs = std::vector<ProviderMsgPtr>;
+using UserOperationPtr = std::shared_ptr<Core::UserOperation>;
+using UserOperationPtrs = std::vector<UserOperationPtr>;
+using EventPtr = std::shared_ptr<Event>;
+
 }}
