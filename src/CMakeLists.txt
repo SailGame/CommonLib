@@ -1,3 +1,6 @@
 if(BUILD_UNO_LIB)
     add_subdirectory(uno)
 endif()
+if(BUILD_CODENAMES_LIB)
+    add_subdirectory(codenames)
+endif()
