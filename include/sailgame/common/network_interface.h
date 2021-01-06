@@ -3,7 +3,6 @@
 #include <string>
 #include <memory>
 #include <functional>
-#include <spdlog/spdlog.h>
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
@@ -22,6 +21,10 @@
 
 namespace SailGame { namespace Common {
 
+using Core::GameCore;
+using Core::OperationInRoomArgs;
+using Core::OperationInRoomRet;
+using Core::ProviderMsg;
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::ClientReader;
@@ -29,9 +32,6 @@ using grpc::ClientReaderWriter;
 using grpc::ClientReaderWriterInterface;
 using grpc::ClientWriter;
 using grpc::Status;
-using Core::ProviderMsg;
-using Core::OperationInRoomArgs;
-using Core::GameCore;
 
 class NetworkInterfaceSubscriber {
 public:
@@ -86,13 +86,13 @@ public:
 
         /// TODO: where to join the thread
         mListenThread = std::make_unique<std::thread>(listenFunc);
-        spdlog::info("listen thread created");
+        // spdlog::info("listen thread created");
     }
 
     void AsyncSendMsg(const ProviderMsg &msg) {
         if constexpr (IsProvider) {
             mStream->Write(msg);
-            spdlog::info("msg sent, type = {}", msg.Msg_case());
+            // spdlog::info("msg sent, type = {}", msg.Msg_case());
         }
         else {
             throw std::runtime_error("Client cannot send ProviderMsg.");
@@ -102,7 +102,9 @@ public:
     /// XXX: how to adapt to all msgs
     void SendOperationInRoomArgs(const OperationInRoomArgs &args) {
         if constexpr (!IsProvider) {
-            mStream->Write(args);
+            // mStream->Write(args);
+            OperationInRoomRet ret;
+            mStub->OperationInRoom(&mContext, args, &ret);
         }
         else {
             throw std::runtime_error("Provider cannot send OperationInRoomArgs.");
@@ -126,7 +128,7 @@ public:
 
     void OnEventHappens(const MsgT &msg) {
         mSubscriber->OnEventHappens(std::make_shared<EventT>(msg));
-        spdlog::info("msg received, type = {}", msg.Msg_case());
+        // spdlog::info("msg received, type = {}", msg.Msg_case());
     }
 
     void SetSubscriber(NetworkInterfaceSubscriber *subscriber) {

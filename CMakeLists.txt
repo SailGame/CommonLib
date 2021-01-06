@@ -58,6 +58,7 @@ add_library(pb_lib ${pb_srcs})
 # use "#include <sailgame_pb/core/core.pb.h>"
 target_include_directories(pb_lib PUBLIC ${CMAKE_BINARY_DIR})
 target_include_directories(pb_lib PUBLIC ${pb_dir})
+target_include_directories(pb_lib PUBLIC include)
 target_link_libraries(pb_lib PUBLIC 
     ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 

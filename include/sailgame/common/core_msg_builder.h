@@ -5,6 +5,7 @@
 namespace SailGame { namespace Common {
 
 using ::Core::ListenArgs;
+using ::Core::OperationInRoomArgs;
 
 class CoreMsgBuilder {
 public:
@@ -14,6 +15,16 @@ public:
     {
         ListenArgs args;
         args.set_token(mToken);
+        return args;
+    }
+
+    /// XXX: handle the other case
+    template<typename UserOperationT>
+    static OperationInRoomArgs CreateOperationInRoomArgs(const UserOperationT &custom)
+    {
+        OperationInRoomArgs args;
+        args.set_token(mToken);
+        args.mutable_custom()->PackFrom(custom);
         return args;
     }
 

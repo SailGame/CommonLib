@@ -62,6 +62,14 @@ public:
         any.UnpackTo(&ret);
         return ret;
     }
+
+    static int Wrap(int numToWrap, int range) {
+        int ret = numToWrap % range;
+        if (ret < 0) {
+            ret += range;
+        }
+        return ret;
+    }
 };
 
 template<bool IsProvider>
