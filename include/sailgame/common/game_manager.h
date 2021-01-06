@@ -13,13 +13,13 @@ namespace SailGame { namespace Common {
 
 using Core::ProviderMsg;
 
-template<typename StateT, bool IsProvider>
+template<bool IsProvider>
 class GameManager : 
     public EventLoopSubscriber, 
     public NetworkInterfaceSubscriber {
 public:
     GameManager(const std::shared_ptr<EventLoop> &eventLoop, 
-        const std::shared_ptr<StateMachine<StateT>> &stateMachine,
+        const std::shared_ptr<IStateMachine> &stateMachine,
         const std::shared_ptr<NetworkInterface<IsProvider>> &networkInterface)
         : mEventLoop(eventLoop), mStateMachine(stateMachine),
         mNetworkInterface(networkInterface)
@@ -40,9 +40,17 @@ public:
 
     bool HasEventToProcess() const { return !mEventLoop->Empty(); }
 
-    void StartWithRegisterArgs(const ProviderMsgPtr &msg) {
+    void StartWithRegisterArgs(const ProviderMsg &msg) {
+        assert(IsProvider);
         mNetworkInterface->AsyncListen();
-        mNetworkInterface->AsyncSendMsg(*msg);
+        mNetworkInterface->AsyncSendMsg(msg);
+        mEventLoop->StartLoop();
+    }
+
+    void StartWithToken(const std::string &token) {
+        assert(!IsProvider);
+        CoreMsgBuilder::SetToken(token);
+        mNetworkInterface->AsyncListen();
         mEventLoop->StartLoop();
     }
 
@@ -55,8 +63,8 @@ public:
             case EventType::PROVIDER_MSG: {
                 auto msg = std::dynamic_pointer_cast<ProviderMsgEvent>(event)->mMsg;
                 auto notifyMsgs = mStateMachine->TransitionForProviderMsg(msg);
-                for (const auto &msg : notifyMsgs) {
-                    mNetworkInterface->AsyncSendMsg(*msg);
+                for (const auto &msgToSend : notifyMsgs) {
+                    mNetworkInterface->AsyncSendMsg(msgToSend);
                 }
                 break;
             }
@@ -66,8 +74,9 @@ public:
                 break;
             }
             case EventType::USER_INPUT: {
-                auto operationArgs = mStateMachine->TransitionForUserInput(event);
-                mNetworkInterface->SendOperationInRoomArgs(*operationArgs);
+                auto uiEvent = *std::dynamic_pointer_cast<UserInputEvent>(event);
+                auto operationArgs = mStateMachine->TransitionForUserInput(uiEvent);
+                mNetworkInterface->SendOperationInRoomArgs(operationArgs);
                 break;
             }
             default:
@@ -75,10 +84,9 @@ public:
         }
     }
 
-
 private:
     std::shared_ptr<EventLoop> mEventLoop;
-    std::shared_ptr<StateMachine<StateT>> mStateMachine;
+    std::shared_ptr<IStateMachine> mStateMachine;
     std::shared_ptr<NetworkInterface<IsProvider>> mNetworkInterface;
 };
 }}

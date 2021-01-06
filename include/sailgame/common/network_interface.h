@@ -17,6 +17,8 @@
 #include "types.h"
 #include "event.h"
 #include "util.h"
+#include "core_msg_builder.h"
+#include "provider_msg_builder.h"
 
 namespace SailGame { namespace Common {
 
@@ -63,7 +65,7 @@ public:
             mStream = mStub->Provider(&mContext);
         }
         else {
-            // mStream = mStub->Listen(&mContext, /*listenArgs*/);
+            mStream = mStub->Listen(&mContext, CoreMsgBuilder::CreateListenArgs());
         }
     }
 

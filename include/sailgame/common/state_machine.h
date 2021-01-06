@@ -1,38 +1,65 @@
 #pragma once
 
 #include <memory>
+#include <sailgame_pb/core/provider.pb.h>
+#include <sailgame_pb/core/types.pb.h>
 
 #include "types.h"
+#include "event.h"
 
 namespace SailGame { namespace Common {
 
-template<typename StateT>
-class StateMachine {
+using ::Core::BroadcastMsg;
+using ::Core::CloseGameArgs;
+using ::Core::OperationInRoomArgs;
+using ::Core::ProviderMsg;
+using ::Core::QueryStateArgs;
+using ::Core::RegisterRet;
+using ::Core::StartGameArgs;
+using ::Core::UserOperationArgs;
+
+class IStateMachine {
 public:
-    StateMachine() = default;
-
-    static std::shared_ptr<StateMachine> Create() {
-        return std::make_shared<StateMachine>();
-    }
-
-    template<typename MsgT>
-    ProviderMsgPtrs TransitionForProviderMsg(const MsgT &event) {
+    ProviderMsgs TransitionForProviderMsg(const ProviderMsg &msg) {
+        // seqId is not used now
+        switch (msg.Msg_case()) {
+            case ProviderMsg::MsgCase::kRegisterRet:
+                return Transition(msg.registerret());
+            case ProviderMsg::MsgCase::kStartGameArgs:
+                return Transition(msg.startgameargs());
+            case ProviderMsg::MsgCase::kCloseGameArgs:
+                return Transition(msg.closegameargs());
+            case ProviderMsg::MsgCase::kQueryStateArgs:
+                return Transition(msg.querystateargs());
+            case ProviderMsg::MsgCase::kUserOperationArgs:
+                return Transition(msg.useroperationargs());
+        }
         throw std::runtime_error("Unsupported msg type");
+        return {};
     }
 
-    template<typename MsgT>
-    void TransitionForBroadcastMsg(const MsgT &event) {
-        throw std::runtime_error("Unsupported msg type");
+    void TransitionForBroadcastMsg(const BroadcastMsg &msg) {
+        Transition(msg);
     }
 
-    template<typename EventT>
-    OperationInRoomArgsPtr TransitionForUserInput(const EventT &event) {
-        throw std::runtime_error("Unsupported event type");
+    OperationInRoomArgs TransitionForUserInput(const UserInputEvent &event) {
+        return Transition(event);
     }
 
-    const StateT &GetState() const { return mState; } 
+protected:
+    virtual ProviderMsgs Transition(const RegisterRet &) { return {}; }
 
-private:
-    StateT mState;
+    virtual ProviderMsgs Transition(const StartGameArgs &) { return {}; }
+
+    virtual ProviderMsgs Transition(const CloseGameArgs &) { return {}; }
+
+    virtual ProviderMsgs Transition(const QueryStateArgs &) { return {}; }
+
+    virtual ProviderMsgs Transition(const UserOperationArgs &) { return {}; }
+
+    virtual void Transition(const BroadcastMsg &) {}
+
+    virtual OperationInRoomArgs Transition(const UserInputEvent &) { return {}; }
 };
+
 }}

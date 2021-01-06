@@ -7,7 +7,7 @@
 
 #include <sailgame_pb/uno/uno.pb.h>
 
-namespace SailGame { namespace Game {
+namespace SailGame { namespace Uno {
 
 using ::Uno::CardColor;
 using ::Uno::CardText;
