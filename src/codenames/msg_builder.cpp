@@ -24,6 +24,34 @@ StartGameSettings MsgBuilder::CreateStartGameSettings(int hourglass)
     return settings;
 }
 
+ProviderMsgPtr MsgBuilder::CreateUserOperationArgs(int seqId, int roomId, 
+    int userId, const UserOperation &custom)
+{
+    auto msg = std::make_shared<ProviderMsg>();
+    msg->set_sequenceid(seqId);
+
+    auto args = msg->mutable_useroperationargs();
+    args->set_roomid(roomId);
+    args->set_userid(userId);
+    args->mutable_custom()->PackFrom(custom);
+
+    return msg;   
+}
+
+UserOperation MsgBuilder::CreateLeaderWord(const std::string &word)
+{
+    UserOperation msg;
+    msg.mutable_lword()->mutable_word()->set_word(word);
+    return msg;
+}
+
+UserOperation MsgBuilder::CreateFollowerWord(const std::string &word)
+{
+    UserOperation msg;
+    msg.mutable_fword()->mutable_word()->set_word(word);
+    return msg;
+}
+
 ProviderMsgPtr MsgBuilder::CreateRegisterArgs(int seqId, const std::string &id,
     const std::string &gameName, int maxUsers, int minUsers)
 {

@@ -24,8 +24,11 @@ static const size_t MATRIX_SIZE = 25;
     return card;
 }
 
-WordSet::WordSet(std::string filepath)
+WordSet::WordSet(std::filesystem::path filepath)
 {
+    if(!fs::exists(filepath) || !fs::is_regular_file(filepath)) {
+        throw std::runtime_error("File not exists");
+    }
     std::string word;
     std::ifstream in(filepath);
     if(in.is_open())
@@ -39,11 +42,11 @@ WordSet::WordSet(std::string filepath)
     else {
         throw std::runtime_error("Unable to open file");
     }
+    std::srand(std::time(nullptr));
 }
 
 std::vector<Word> WordSet::Draw()
 {
-    std::srand(std::time(nullptr));
     auto begin = std::rand() % mWords.size();
     auto end = (begin + MATRIX_SIZE) % mWords.size();
     if(begin < end)
@@ -58,8 +61,11 @@ std::vector<Word> WordSet::Draw()
     }
 }
 
-PartySet::PartySet(std::string filepath)
+PartySet::PartySet(std::filesystem::path filepath)
 {
+    if(!fs::exists(filepath) || !fs::is_regular_file(filepath)) {
+        throw std::runtime_error("File not exists");
+    }
     std::string party = "null";
     std::ifstream in(filepath);
     if(in.is_open())
@@ -82,12 +88,12 @@ PartySet::PartySet(std::string filepath)
     }
     else {
         throw std::runtime_error("Unable to open file");
-    }   
+    }
+    std::srand(std::time(nullptr));
 }
 
 std::vector<Party> PartySet::Draw()
 {
-    std::srand(std::time(nullptr));
     auto begin = std::rand() % (mParties.size() / MATRIX_SIZE);
     return {mParties.begin()+(begin*MATRIX_SIZE), mParties.begin()+(begin*MATRIX_SIZE+MATRIX_SIZE)};
 }

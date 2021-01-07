@@ -13,6 +13,7 @@ using ::Codenames::CardInfo;
 using ::Codenames::State;
 using ::Codenames::Turn;
 using ::Codenames::StartGameSettings;
+using ::Codenames::UserOperation;
 using Core::ErrorNumber;
 using Core::NotifyMsgArgs;
 using Core::ProviderMsg;
@@ -23,9 +24,16 @@ class MsgBuilder
 {
 public:
     static ProviderMsgPtr CreateStartGameArgs(int seqId, int roomId, 
-        const std::vector<unsigned int> userIds, const StartGameSettings &custom);
+        const std::vector<unsigned int> &userIds, const StartGameSettings &custom);
 
     static StartGameSettings CreateStartGameSettings(int hourglass);
+
+    static ProviderMsgPtr CreateUserOperationArgs(int seqId, int roomId,
+        int userId, const UserOperation &custom);
+
+    static UserOperation CreateLeaderWord(const std::string &word);
+
+    static UserOperation CreateFollowerWord(const std::string &word);
     
     static ProviderMsgPtr CreateRegisterArgs(int seqId, const std::string &id,
         const std::string &gameName, int maxUsers, int minUsers);

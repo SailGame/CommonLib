@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sailgame_pb/codenames/codenames.pb.h>
+#include <filesystem>
 
 namespace SailGame { namespace Game {
 
@@ -9,7 +10,7 @@ using ::Codenames::Party;
 class Word
 {
 public:
-    Word(std::string word) : mStr(word) {}
+    Word(const std::string &word) : mStr(word) {}
     ::Codenames::Word ConvertToGrpcWord() const;
     bool operator==(const Word &other) const
     {
@@ -27,8 +28,8 @@ private:
 class Card
 {
 public:
-    Card(std::string word, Party party) : mWord(word), mParty(party) {}
-    Card(Word word, Party party) : mWord(word), mParty(party) {}
+    Card(const std::string &word, const Party &party) : mWord(word), mParty(party) {}
+    Card(const Word &word, const Party &party) : mWord(word), mParty(party) {}
     ::Codenames::Card ConvertToGrpcCard() const;
 private:
     Word mWord;
@@ -45,7 +46,7 @@ public:
 class WordSet : public Set<Word>
 {
 public:
-    WordSet(std::string filepath);
+    WordSet(std::filesystem::path filepath);
     std::vector<Word> Draw();
 private:
     std::vector<Word> mWords;
@@ -54,7 +55,7 @@ private:
 class PartySet : public Set<Party>
 {
 public:
-    PartySet(std::string filepath);
+    PartySet(std::filesystem::path filepath);
     std::vector<Party> Draw();
 private:
     std::vector<Party> mParties;
