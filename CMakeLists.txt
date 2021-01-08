@@ -21,6 +21,7 @@ option(IMPORT_GRPC_BY_FETCHCONTENT OFF)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     set(BUILD_UNO_LIB ON)
     set(BUILD_TEXAS_LIB ON)
+    set(BUILD_CODENAMES_LIB ON)
 endif()
 
 # Proto files
@@ -33,6 +34,10 @@ endif()
 if(BUILD_TEXAS_LIB)
     file(GLOB texas_proto_files ${proto_dir}/texas/*.proto)
     list(APPEND proto_files ${texas_proto_files})
+endif()
+if(BUILD_CODENAMES_LIB)
+    file(GLOB codenames_proto_files ${proto_dir}/codenames/*.proto)
+    list(APPEND proto_files ${codenames_proto_files})
 endif()
 
 # Generated pb files
