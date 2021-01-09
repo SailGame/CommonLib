@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <thread>
 #include <memory>
 #include <functional>
 #include <grpc/grpc.h>
@@ -109,6 +110,12 @@ public:
         else {
             throw std::runtime_error("Provider cannot send OperationInRoomArgs.");
         }
+    }
+
+    Core::LoginRet Login(const Core::LoginArgs &args) {
+        LoginRet ret;
+        auto status = mStub->Login(&mContext, args, &ret);
+        return ret;
     }
 
     MsgT ReceiveMsg()

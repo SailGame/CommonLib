@@ -13,8 +13,7 @@ using Core::ProviderMsg;
 
 enum class EventType {
     PROVIDER_MSG,
-    BROADCAST_MSG,
-    USER_INPUT
+    BROADCAST_MSG
 };
 
 struct Event {
@@ -37,10 +36,6 @@ struct BroadcastMsgEvent : public Event {
         : Event(EventType::BROADCAST_MSG), mMsg(msg) {}
 
     BroadcastMsg mMsg;
-};
-
-struct UserInputEvent : public Event {
-    UserInputEvent() : Event(EventType::USER_INPUT) {}
 };
 
 }}

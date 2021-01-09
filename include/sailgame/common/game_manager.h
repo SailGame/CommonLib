@@ -73,16 +73,16 @@ public:
                 mStateMachine->TransitionForBroadcastMsg(msg);
                 break;
             }
-            case EventType::USER_INPUT: {
-                auto uiEvent = *std::dynamic_pointer_cast<UserInputEvent>(event);
-                auto operationArgs = mStateMachine->TransitionForUserInput(uiEvent);
-                mNetworkInterface->SendOperationInRoomArgs(operationArgs);
-                break;
-            }
             default:
                 throw std::runtime_error("Unsupported event type.");
         }
     }
+
+    void SetNewStateMachine(const std::shared_ptr<IStateMachine> &newStateMachine) {
+        mStateMachine = newStateMachine;
+    }
+
+    const IState &GetState() const { return mStateMachine->GetState(); }
 
 private:
     std::shared_ptr<EventLoop> mEventLoop;

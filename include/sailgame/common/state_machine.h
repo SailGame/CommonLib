@@ -18,6 +18,11 @@ using ::Core::RegisterRet;
 using ::Core::StartGameArgs;
 using ::Core::UserOperationArgs;
 
+class IState {
+public:
+    virtual ~IState() {}
+};
+
 class IStateMachine {
 public:
     ProviderMsgs TransitionForProviderMsg(const ProviderMsg &msg) {
@@ -42,9 +47,7 @@ public:
         Transition(msg);
     }
 
-    OperationInRoomArgs TransitionForUserInput(const UserInputEvent &event) {
-        return Transition(event);
-    }
+    virtual const IState &GetState() const = 0;
 
 protected:
     virtual ProviderMsgs Transition(const RegisterRet &) { return {}; }
@@ -58,8 +61,6 @@ protected:
     virtual ProviderMsgs Transition(const UserOperationArgs &) { return {}; }
 
     virtual void Transition(const BroadcastMsg &) {}
-
-    virtual OperationInRoomArgs Transition(const UserInputEvent &) { return {}; }
 };
 
 }}
