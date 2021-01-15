@@ -79,8 +79,12 @@ public:
     }
 
     void SetNewStateMachine(const std::shared_ptr<IStateMachine> &newStateMachine) {
+        auto oldStateMachine = mStateMachine;
         mStateMachine = newStateMachine;
+        mStateMachine->SwitchFrom(*oldStateMachine);
     }
+
+    GameType GetGameType() const { return mStateMachine->GetType(); }
 
     const IState &GetState() const { return mStateMachine->GetState(); }
 

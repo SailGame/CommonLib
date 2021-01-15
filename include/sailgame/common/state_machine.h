@@ -49,18 +49,25 @@ public:
 
     virtual const IState &GetState() const = 0;
 
+    virtual GameType GetType() const = 0;
+
+    virtual void SwitchFrom(const IStateMachine &) = 0;
+
+    virtual ~IStateMachine() = default;
+
 protected:
-    virtual ProviderMsgs Transition(const RegisterRet &) { return {}; }
+    // state machine of provider side needs to implement
+    virtual ProviderMsgs Transition(const RegisterRet &) = 0;
 
-    virtual ProviderMsgs Transition(const StartGameArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const StartGameArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const CloseGameArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const CloseGameArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const QueryStateArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const QueryStateArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const UserOperationArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const UserOperationArgs &) = 0;
 
-    virtual void Transition(const BroadcastMsg &) {}
+    // state machine of client side needs to implement
+    virtual void Transition(const BroadcastMsg &) = 0;
 };
-
 }}

@@ -24,7 +24,7 @@ NotifyMsg MsgBuilder::CreateGameStart(const InitHandcardsT &initHandcards,
     }
     gameStart->mutable_flippedcard()->CopyFrom(
         flippedCard.ConvertToGrpcCard());
-    gameStart->set_firstplayerid(firstPlayer);
+    gameStart->set_firstplayer(firstPlayer);
     return notifyMsg;
 }
 
@@ -35,14 +35,6 @@ NotifyMsg MsgBuilder::CreateDraw(const Draw &draw)
     return msg;
 }
 
-UserOperation MsgBuilder::CreateDraw(int number)
-{
-    UserOperation msg;
-    auto draw = msg.mutable_draw();
-    draw->set_number(number);
-    return msg;
-}
-
 NotifyMsg MsgBuilder::CreateSkip(const Skip &skip)
 {
     NotifyMsg msg;
@@ -50,26 +42,10 @@ NotifyMsg MsgBuilder::CreateSkip(const Skip &skip)
     return msg;
 }
 
-UserOperation MsgBuilder::CreateSkip()
-{
-    UserOperation msg;
-    msg.mutable_skip();
-    return msg;
-}
-
 NotifyMsg MsgBuilder::CreatePlay(const Play &play)
 {
     NotifyMsg msg;
     msg.mutable_play()->CopyFrom(play);
-    return msg;
-}
-
-UserOperation MsgBuilder::CreatePlay(Card card, CardColor color)
-{
-    UserOperation msg;
-    auto play = msg.mutable_play();
-    play->mutable_card()->CopyFrom(card.ConvertToGrpcCard());
-    play->set_nextcolor(color);
     return msg;
 }
 

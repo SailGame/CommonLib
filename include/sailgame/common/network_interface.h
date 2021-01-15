@@ -93,30 +93,30 @@ public:
     void AsyncSendMsg(const ProviderMsg &msg) {
         if constexpr (IsProvider) {
             mStream->Write(msg);
-            // spdlog::info("msg sent, type = {}", msg.Msg_case());
         }
         else {
             throw std::runtime_error("Client cannot send ProviderMsg.");
         }
     }
 
-    /// XXX: how to adapt to all msgs
-    void SendOperationInRoomArgs(const OperationInRoomArgs &args) {
-        if constexpr (!IsProvider) {
-            // mStream->Write(args);
-            OperationInRoomRet ret;
-            mStub->OperationInRoom(&mContext, args, &ret);
-        }
-        else {
-            throw std::runtime_error("Provider cannot send OperationInRoomArgs.");
-        }
+/// XXX: use a better way
+#define RpcMethod(RpcName) \
+    Core::RpcName##Ret RpcName(const Core::RpcName##Args &args) { \
+        RpcName##Ret ret; \
+        auto status = mStub->RpcName(&mContext, args, &ret); \
+        return ret; \
     }
 
-    Core::LoginRet Login(const Core::LoginArgs &args) {
-        LoginRet ret;
-        auto status = mStub->Login(&mContext, args, &ret);
-        return ret;
-    }
+    RpcMethod(Login)
+    RpcMethod(QueryAccount)
+    RpcMethod(CreateRoom)
+    RpcMethod(ControlRoom)
+    RpcMethod(ListRoom)
+    RpcMethod(JoinRoom)
+    RpcMethod(ExitRoom)
+    RpcMethod(QueryRoom)
+    RpcMethod(OperationInRoom)
+    RpcMethod(Message)
 
     MsgT ReceiveMsg()
     {
@@ -135,7 +135,6 @@ public:
 
     void OnEventHappens(const MsgT &msg) {
         mSubscriber->OnEventHappens(std::make_shared<EventT>(msg));
-        // spdlog::info("msg received, type = {}", msg.Msg_case());
     }
 
     void SetSubscriber(NetworkInterfaceSubscriber *subscriber) {
