@@ -39,88 +39,96 @@ public:
     virtual void OnEventHappens(const EventPtr &) = 0;
 };
 
-template <bool IsProvider>
-class NetworkInterface {
-private:
-    using MsgT = get_msg_t<IsProvider>;
-    using StreamT = get_stream_t<IsProvider>;
-    using EventT = get_event_t<IsProvider>;
-
+class INetworkInterface {
 public:
-    NetworkInterface(const std::shared_ptr<GameCore::StubInterface> &stub) 
-        : mStub(stub)
-    {}
+    INetworkInterface(const std::shared_ptr<GameCore::StubInterface> &stub)
+        : mStub(stub) {}
 
     static std::shared_ptr<GameCore::StubInterface> CreateStub(const std::string &endpoint) {
         auto channel = grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials());
         return GameCore::NewStub(channel);
     }
 
-    static std::shared_ptr<NetworkInterface> Create(
-        const std::shared_ptr<GameCore::StubInterface> &stub) {
-        return std::make_shared<NetworkInterface>(stub);
+    virtual void Connect() = 0;
+
+    virtual bool IsConnected() const = 0;
+
+    virtual void AsyncSendMsg(const ProviderMsg &msg) {
+        throw std::runtime_error("INetworkInterface's AsyncSendMsg invoked.");
     }
 
-    void Connect() {
-        if constexpr (IsProvider) {
-            mStream = mStub->Provider(&mContext);
-        }
-        else {
-            mStream = mStub->Listen(&mContext, CoreMsgBuilder::CreateListenArgs());
-        }
-    }
-
-    bool IsConnected() const {
-        return mStream != nullptr;
+    void SetSubscriber(NetworkInterfaceSubscriber *subscriber) {
+        mSubscriber = subscriber;
     }
 
     void AsyncListen() {
+        // spdlog::info("[INetworkInterface] AsyncListen invoked.");
         Connect();
-        /// XXX: remove this
-        // mStream->WritesDone();
+        mListenThread = std::make_unique<std::thread>(mListenFunc);
+        // spdlog::info("[INetworkInterface] Listen Thread started.");
+    }
 
-        auto listenFunc = [this] {
+    void Stop() { 
+        if (mListenThread) {
+            mListenThread->join(); 
+        }
+    }
+
+    std::function<void()> mListenFunc;
+
+protected:
+    // this context is for Listen streaming
+    // NOTE that in grpc, context cannot be reused.
+    ClientContext mContext;
+    std::shared_ptr<GameCore::StubInterface> mStub;
+    NetworkInterfaceSubscriber *mSubscriber{nullptr};
+
+private:
+    std::unique_ptr<std::thread> mListenThread;
+};
+
+class ProviderNetworkInterface : public INetworkInterface {
+public:
+    ProviderNetworkInterface(const std::shared_ptr<GameCore::StubInterface> &stub)
+        : INetworkInterface(stub)
+    {
+        mListenFunc = [this] {
             while (true) {
                 OnEventHappens(ReceiveMsg());
             }
         };
-
-        /// TODO: where to join the thread
-        mListenThread = std::make_unique<std::thread>(listenFunc);
-        // spdlog::info("listen thread created");
     }
 
-    void AsyncSendMsg(const ProviderMsg &msg) {
-        if constexpr (IsProvider) {
-            mStream->Write(msg);
-        }
-        else {
-            throw std::runtime_error("Client cannot send ProviderMsg.");
-        }
+    ~ProviderNetworkInterface() {
+        mStream->WritesDone();
     }
 
-/// XXX: use a better way
-#define RpcMethod(RpcName) \
-    Core::RpcName##Ret RpcName(const Core::RpcName##Args &args) { \
-        RpcName##Ret ret; \
-        auto status = mStub->RpcName(&mContext, args, &ret); \
-        return ret; \
-    }
-
-    RpcMethod(Login)
-    RpcMethod(QueryAccount)
-    RpcMethod(CreateRoom)
-    RpcMethod(ControlRoom)
-    RpcMethod(ListRoom)
-    RpcMethod(JoinRoom)
-    RpcMethod(ExitRoom)
-    RpcMethod(QueryRoom)
-    RpcMethod(OperationInRoom)
-    RpcMethod(Message)
-
-    MsgT ReceiveMsg()
+    static std::shared_ptr<ProviderNetworkInterface> Create(
+        const std::shared_ptr<GameCore::StubInterface> &stub) 
     {
-        MsgT msg;
+        return std::make_shared<ProviderNetworkInterface>(stub);
+    }
+
+    virtual void Connect() override {
+        // spdlog::info("[INetworkInterface] Connect invoked.");
+        mStream = mStub->Provider(&mContext);
+    }
+
+    virtual bool IsConnected() const override {
+        return mStream != nullptr;
+    }
+
+    virtual void AsyncSendMsg(const ProviderMsg &msg) override {
+        mStream->Write(msg);
+    }
+
+    void OnEventHappens(const ProviderMsg &msg) {
+        mSubscriber->OnEventHappens(std::make_shared<ProviderMsgEvent>(msg));
+    }
+
+    ProviderMsg ReceiveMsg()
+    {
+        ProviderMsg msg;
         if (mStream->Read(&msg)) {
             return msg;
         }
@@ -133,19 +141,8 @@ public:
         return msg;
     }
 
-    void OnEventHappens(const MsgT &msg) {
-        mSubscriber->OnEventHappens(std::make_shared<EventT>(msg));
-    }
-
-    void SetSubscriber(NetworkInterfaceSubscriber *subscriber) {
-        mSubscriber = subscriber;
-    }
-
 private:
-    ClientContext mContext;
-    std::shared_ptr<GameCore::StubInterface> mStub;
-    std::shared_ptr<StreamT> mStream;
-    std::unique_ptr<std::thread> mListenThread;
-    NetworkInterfaceSubscriber *mSubscriber{nullptr};
+    std::shared_ptr<ClientReaderWriterInterface<ProviderMsg, ProviderMsg>> mStream;
 };
+
 }}

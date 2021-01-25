@@ -13,84 +13,73 @@ namespace SailGame { namespace Common {
 
 using Core::ProviderMsg;
 
-template<bool IsProvider>
-class GameManager : 
+class IGameManager : 
     public EventLoopSubscriber, 
     public NetworkInterfaceSubscriber {
 public:
-    GameManager(const std::shared_ptr<EventLoop> &eventLoop, 
-        const std::shared_ptr<IStateMachine> &stateMachine,
-        const std::shared_ptr<NetworkInterface<IsProvider>> &networkInterface)
-        : mEventLoop(eventLoop), mStateMachine(stateMachine),
-        mNetworkInterface(networkInterface)
+    IGameManager(const std::shared_ptr<EventLoop> &eventLoop)
+        : mEventLoop(eventLoop)
     {
         mEventLoop->SetSubscriber(this);
-        mNetworkInterface->SetSubscriber(this);
     }
 
-    void Start() {
-        mNetworkInterface->Connect();
+    virtual void Start() {
         mEventLoop->StartLoop();
     }
 
-    void Stop() {
+    virtual void Stop() {
         mEventLoop->StopLoop();
-        // mNetworkInterface->Stop();
+    }
+
+    virtual void OnEventHappens(const EventPtr &event) override {
+        mEventLoop->AppendEvent(event);
     }
 
     bool HasEventToProcess() const { return !mEventLoop->Empty(); }
 
-    void StartWithRegisterArgs(const ProviderMsg &msg) {
-        assert(IsProvider);
-        mNetworkInterface->AsyncListen();
-        mNetworkInterface->AsyncSendMsg(msg);
-        mEventLoop->StartLoop();
+private:
+    std::shared_ptr<EventLoop> mEventLoop;
+};
+
+class ProviderGameManager : public IGameManager {
+public:
+    ProviderGameManager(const std::shared_ptr<EventLoop> &eventLoop, 
+        const std::shared_ptr<ProviderStateMachine> &stateMachine,
+        const std::shared_ptr<ProviderNetworkInterface> &networkInterface)
+        : IGameManager(eventLoop), mStateMachine(stateMachine),
+        mNetworkInterface(networkInterface)
+    {
+        mNetworkInterface->SetSubscriber(this);
     }
 
-    void StartWithToken(const std::string &token) {
-        assert(!IsProvider);
-        CoreMsgBuilder::SetToken(token);
-        mNetworkInterface->AsyncListen();
-        mEventLoop->StartLoop();
+    virtual void Start() override {
+        mNetworkInterface->Connect();
+        IGameManager::Start();
     }
 
-    void OnEventHappens(const EventPtr &event) override {
-        mEventLoop->AppendEvent(event);
+    virtual void Stop() override { 
+        mNetworkInterface->Stop();
+        IGameManager::Stop();
     }
 
-    void OnEventProcessed(const EventPtr &event) override {
-        switch (event->mType) {
-            case EventType::PROVIDER_MSG: {
-                auto msg = std::dynamic_pointer_cast<ProviderMsgEvent>(event)->mMsg;
-                auto notifyMsgs = mStateMachine->TransitionForProviderMsg(msg);
-                for (const auto &msgToSend : notifyMsgs) {
-                    mNetworkInterface->AsyncSendMsg(msgToSend);
-                }
-                break;
-            }
-            case EventType::BROADCAST_MSG: {
-                auto msg = std::dynamic_pointer_cast<BroadcastMsgEvent>(event)->mMsg;
-                mStateMachine->TransitionForBroadcastMsg(msg);
-                break;
-            }
-            default:
-                throw std::runtime_error("Unsupported event type.");
+    virtual void OnEventProcessed(const EventPtr &event) override {
+        assert(event->mType == EventType::PROVIDER_MSG);
+        auto msg = std::dynamic_pointer_cast<ProviderMsgEvent>(event)->mMsg;
+        auto notifyMsgs = mStateMachine->TransitionForProviderMsg(msg);
+        for (const auto &msgToSend : notifyMsgs) {
+            mNetworkInterface->AsyncSendMsg(msgToSend);
         }
     }
 
-    void SetNewStateMachine(const std::shared_ptr<IStateMachine> &newStateMachine) {
-        auto oldStateMachine = mStateMachine;
-        mStateMachine = newStateMachine;
-        mStateMachine->SwitchFrom(*oldStateMachine);
+    void StartWithRegisterArgs(const ProviderMsg &msg) {
+        mNetworkInterface->AsyncListen();
+        mNetworkInterface->AsyncSendMsg(msg);
+        IGameManager::Start();
     }
 
-    GameType GetGameType() const { return mStateMachine->GetType(); }
-
-    const IState &GetState() const { return mStateMachine->GetState(); }
-
 private:
-    std::shared_ptr<EventLoop> mEventLoop;
-    std::shared_ptr<IStateMachine> mStateMachine;
-    std::shared_ptr<NetworkInterface<IsProvider>> mNetworkInterface;
+    std::shared_ptr<ProviderStateMachine> mStateMachine;
+    std::shared_ptr<ProviderNetworkInterface> mNetworkInterface;
 };
+
 }}
