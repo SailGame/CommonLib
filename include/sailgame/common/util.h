@@ -11,6 +11,7 @@
 #include <sailgame_pb/core/provider.pb.h>
 
 #include "event.h"
+#include "types.h"
 
 namespace SailGame { namespace Common {
 
@@ -62,32 +63,27 @@ public:
         any.UnpackTo(&ret);
         return ret;
     }
+
+    static int Wrap(int numToWrap, int range) {
+        int ret = numToWrap % range;
+        if (ret < 0) {
+            ret += range;
+        }
+        return ret;
+    }
+
+    
+    static GameType GetGameTypeByGameName(const std::string &gameName) {
+        static std::map<std::string, GameType> mapping{
+            {"UNO", GameType::Uno},
+        };
+
+        auto it = mapping.find(gameName);
+        if (it == mapping.end()) {
+            throw std::runtime_error("Unsupported game.");
+        }
+        return it->second;
+    }
 };
-
-template<bool IsProvider>
-struct get_network_type;
-
-template<>
-struct get_network_type<true> {
-    using msg_type = ProviderMsg;
-    using stream_type = ClientReaderWriterInterface<ProviderMsg, ProviderMsg>;
-    using event_type = ProviderMsgEvent;
-};
-
-template<>
-struct get_network_type<false> {
-    using msg_type = BroadcastMsg;
-    using stream_type = ClientReaderInterface<BroadcastMsg>;
-    using event_type = BroadcastMsgEvent;
-};
-
-template<bool IsProvider>
-using get_msg_t = typename get_network_type<IsProvider>::msg_type;
-
-template<bool IsProvider>
-using get_stream_t = typename get_network_type<IsProvider>::stream_type;
-
-template <bool IsProvider>
-using get_event_t = typename get_network_type<IsProvider>::event_type;
 
 }}

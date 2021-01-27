@@ -33,15 +33,33 @@ public:
 
     static NotifyMsg CreateDraw(const Draw &draw);
 
-    static UserOperation CreateDraw(int number);
+    template <typename Ret = NotifyMsg>
+    static Ret CreateDraw(int number) {
+        Ret msg;
+        auto draw = msg.mutable_draw();
+        draw->set_number(number);
+        return msg;
+    }
 
     static NotifyMsg CreateSkip(const Skip &skip);
 
-    static UserOperation CreateSkip();
+    template <typename Ret = NotifyMsg>
+    static Ret CreateSkip() {
+        Ret msg;
+        msg.mutable_skip();
+        return msg;
+    }
 
     static NotifyMsg CreatePlay(const Play &play);
 
-    static UserOperation CreatePlay(Card card, CardColor color);
+    template <typename Ret = NotifyMsg>
+    static Ret CreatePlay(Card card, CardColor color) {
+        Ret msg;
+        auto play = msg.mutable_play();
+        play->mutable_card()->CopyFrom(card.ConvertToGrpcCard());
+        play->set_nextcolor(color);
+        return msg;
+    }
 
     static NotifyMsg CreateDrawRsp(const std::vector<Card> &cards);
 };

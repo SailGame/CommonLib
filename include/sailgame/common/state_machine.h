@@ -18,7 +18,17 @@ using ::Core::RegisterRet;
 using ::Core::StartGameArgs;
 using ::Core::UserOperationArgs;
 
+class IState {
+public:
+    virtual ~IState() {}
+};
+
 class IStateMachine {
+public:
+    virtual const IState &GetState() const = 0;
+};
+
+class ProviderStateMachine : public IStateMachine {
 public:
     ProviderMsgs TransitionForProviderMsg(const ProviderMsg &msg) {
         // seqId is not used now
@@ -38,28 +48,16 @@ public:
         return {};
     }
 
-    void TransitionForBroadcastMsg(const BroadcastMsg &msg) {
-        Transition(msg);
-    }
-
-    OperationInRoomArgs TransitionForUserInput(const UserInputEvent &event) {
-        return Transition(event);
-    }
-
 protected:
-    virtual ProviderMsgs Transition(const RegisterRet &) { return {}; }
+    virtual ProviderMsgs Transition(const RegisterRet &) = 0;
 
-    virtual ProviderMsgs Transition(const StartGameArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const StartGameArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const CloseGameArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const CloseGameArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const QueryStateArgs &) { return {}; }
+    virtual ProviderMsgs Transition(const QueryStateArgs &) = 0;
 
-    virtual ProviderMsgs Transition(const UserOperationArgs &) { return {}; }
-
-    virtual void Transition(const BroadcastMsg &) {}
-
-    virtual OperationInRoomArgs Transition(const UserInputEvent &) { return {}; }
+    virtual ProviderMsgs Transition(const UserOperationArgs &) = 0;
 };
 
 }}

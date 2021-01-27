@@ -4,6 +4,7 @@
 #include <set>
 #include <algorithm>
 #include <random>
+#include <array>
 
 #include <sailgame_pb/uno/uno.pb.h>
 
@@ -23,6 +24,7 @@ struct Card {
     Card() = default;
     Card(CardColor color, CardText text) : mColor(color), mText(text) {}
     Card(const ::Uno::Card &card) : mColor(card.color()), mText(card.text()) {}
+    Card(const char *str);
 
     Card(const Card &) = default;
     Card &operator=(const Card &) = default;
@@ -33,6 +35,10 @@ struct Card {
         card.set_text(mText);
         return card;
     }
+
+    std::string ToString() const;
+
+    bool CanBePlayedAfter(Card lastPlayedCard, bool isUno = false);
 
     bool operator<(const Card &rhs) const {
         return (mColor < rhs.mColor) || 

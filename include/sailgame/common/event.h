@@ -6,24 +6,14 @@
 #include <sailgame_pb/core/types.pb.h>
 #include <sailgame_pb/uno/uno.pb.h>
 
-namespace SailGame { 
-
-namespace Game {
-
-enum class UserInputEventType;
-
-}
-
-namespace Common {
+namespace SailGame { namespace Common {
 
 using Core::BroadcastMsg;
 using Core::ProviderMsg;
-using Game::UserInputEventType;
 
 enum class EventType {
     PROVIDER_MSG,
-    BROADCAST_MSG,
-    USER_INPUT
+    BROADCAST_MSG
 };
 
 struct Event {
@@ -48,12 +38,4 @@ struct BroadcastMsgEvent : public Event {
     BroadcastMsg mMsg;
 };
 
-struct UserInputEvent : public Event {
-    UserInputEvent(UserInputEventType type) 
-    : Event(EventType::USER_INPUT), mUserInputType(type) {}
-
-    virtual ~UserInputEvent() {}
-
-    UserInputEventType mUserInputType;
-};
 }}
