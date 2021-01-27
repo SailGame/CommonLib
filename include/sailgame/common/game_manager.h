@@ -13,14 +13,14 @@ namespace SailGame { namespace Common {
 
 using Core::ProviderMsg;
 
-template<typename StateT>
+template<bool IsProvider>
 class GameManager : 
     public EventLoopSubscriber, 
     public NetworkInterfaceSubscriber {
 public:
     GameManager(const std::shared_ptr<EventLoop> &eventLoop, 
-        const std::shared_ptr<StateMachine<StateT>> &stateMachine,
-        const std::shared_ptr<NetworkInterface> &networkInterface)
+        const std::shared_ptr<IStateMachine> &stateMachine,
+        const std::shared_ptr<NetworkInterface<IsProvider>> &networkInterface)
         : mEventLoop(eventLoop), mStateMachine(stateMachine),
         mNetworkInterface(networkInterface)
     {
@@ -40,27 +40,53 @@ public:
 
     bool HasEventToProcess() const { return !mEventLoop->Empty(); }
 
-    void StartWithRegisterArgs(const ProviderMsgPtr &msg) {
+    void StartWithRegisterArgs(const ProviderMsg &msg) {
+        assert(IsProvider);
         mNetworkInterface->AsyncListen();
-        mNetworkInterface->SendMsg(*msg);
+        mNetworkInterface->AsyncSendMsg(msg);
         mEventLoop->StartLoop();
     }
 
-    void OnEventHappens(const ProviderMsgPtr &event) override {
+    void StartWithToken(const std::string &token) {
+        assert(!IsProvider);
+        CoreMsgBuilder::SetToken(token);
+        mNetworkInterface->AsyncListen();
+        mEventLoop->StartLoop();
+    }
+
+    void OnEventHappens(const EventPtr &event) override {
         mEventLoop->AppendEvent(event);
     }
 
-    void OnEventProcessed(const ProviderMsgPtr &event) override {
-        auto notifyMsgs = mStateMachine->Transition(*event);
-        for (const auto &msg : notifyMsgs) {
-            mNetworkInterface->SendMsg(*msg);
+    void OnEventProcessed(const EventPtr &event) override {
+        switch (event->mType) {
+            case EventType::PROVIDER_MSG: {
+                auto msg = std::dynamic_pointer_cast<ProviderMsgEvent>(event)->mMsg;
+                auto notifyMsgs = mStateMachine->TransitionForProviderMsg(msg);
+                for (const auto &msgToSend : notifyMsgs) {
+                    mNetworkInterface->AsyncSendMsg(msgToSend);
+                }
+                break;
+            }
+            case EventType::BROADCAST_MSG: {
+                auto msg = std::dynamic_pointer_cast<BroadcastMsgEvent>(event)->mMsg;
+                mStateMachine->TransitionForBroadcastMsg(msg);
+                break;
+            }
+            case EventType::USER_INPUT: {
+                auto uiEvent = *std::dynamic_pointer_cast<UserInputEvent>(event);
+                auto operationArgs = mStateMachine->TransitionForUserInput(uiEvent);
+                mNetworkInterface->SendOperationInRoomArgs(operationArgs);
+                break;
+            }
+            default:
+                throw std::runtime_error("Unsupported event type.");
         }
     }
 
-
 private:
     std::shared_ptr<EventLoop> mEventLoop;
-    std::shared_ptr<StateMachine<StateT>> mStateMachine;
-    std::shared_ptr<NetworkInterface> mNetworkInterface;
+    std::shared_ptr<IStateMachine> mStateMachine;
+    std::shared_ptr<NetworkInterface<IsProvider>> mNetworkInterface;
 };
 }}

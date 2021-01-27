@@ -11,9 +11,14 @@
 #include <grpcpp/security/credentials.h>
 
 #include <sailgame_pb/core/provider.pb.h>
+#include <sailgame_pb/core/types.pb.h>
 #include <sailgame_pb/core/core.grpc.pb.h>
 
 #include "types.h"
+#include "event.h"
+#include "util.h"
+#include "core_msg_builder.h"
+#include "provider_msg_builder.h"
 
 namespace SailGame { namespace Common {
 
@@ -25,14 +30,21 @@ using grpc::ClientReaderWriterInterface;
 using grpc::ClientWriter;
 using grpc::Status;
 using Core::ProviderMsg;
+using Core::OperationInRoomArgs;
 using Core::GameCore;
 
 class NetworkInterfaceSubscriber {
 public:
-    virtual void OnEventHappens(const ProviderMsgPtr &) = 0;
+    virtual void OnEventHappens(const EventPtr &) = 0;
 };
 
+template <bool IsProvider>
 class NetworkInterface {
+private:
+    using MsgT = get_msg_t<IsProvider>;
+    using StreamT = get_stream_t<IsProvider>;
+    using EventT = get_event_t<IsProvider>;
+
 public:
     NetworkInterface(const std::shared_ptr<GameCore::StubInterface> &stub) 
         : mStub(stub)
@@ -49,7 +61,12 @@ public:
     }
 
     void Connect() {
-        mStream = mStub->Provider(&mContext);
+        if constexpr (IsProvider) {
+            mStream = mStub->Provider(&mContext);
+        }
+        else {
+            mStream = mStub->Listen(&mContext, CoreMsgBuilder::CreateListenArgs());
+        }
     }
 
     bool IsConnected() const {
@@ -72,14 +89,29 @@ public:
         spdlog::info("listen thread created");
     }
 
-    void SendMsg(const ProviderMsg &msg) {
-        mStream->Write(msg);
-        spdlog::info("msg sent, type = {}", msg.Msg_case());
+    void AsyncSendMsg(const ProviderMsg &msg) {
+        if constexpr (IsProvider) {
+            mStream->Write(msg);
+            spdlog::info("msg sent, type = {}", msg.Msg_case());
+        }
+        else {
+            throw std::runtime_error("Client cannot send ProviderMsg.");
+        }
     }
 
-    ProviderMsg ReceiveMsg()
+    /// XXX: how to adapt to all msgs
+    void SendOperationInRoomArgs(const OperationInRoomArgs &args) {
+        if constexpr (!IsProvider) {
+            mStream->Write(args);
+        }
+        else {
+            throw std::runtime_error("Provider cannot send OperationInRoomArgs.");
+        }
+    }
+
+    MsgT ReceiveMsg()
     {
-        ProviderMsg msg;
+        MsgT msg;
         if (mStream->Read(&msg)) {
             return msg;
         }
@@ -92,8 +124,8 @@ public:
         return msg;
     }
 
-    void OnEventHappens(const ProviderMsg &msg) {
-        mSubscriber->OnEventHappens(std::make_shared<ProviderMsg>(msg));
+    void OnEventHappens(const MsgT &msg) {
+        mSubscriber->OnEventHappens(std::make_shared<EventT>(msg));
         spdlog::info("msg received, type = {}", msg.Msg_case());
     }
 
@@ -104,7 +136,7 @@ public:
 private:
     ClientContext mContext;
     std::shared_ptr<GameCore::StubInterface> mStub;
-    std::shared_ptr<ClientReaderWriterInterface<ProviderMsg, ProviderMsg>> mStream;
+    std::shared_ptr<StreamT> mStream;
     std::unique_ptr<std::thread> mListenThread;
     NetworkInterfaceSubscriber *mSubscriber{nullptr};
 };

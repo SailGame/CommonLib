@@ -8,6 +8,7 @@
 #include <sailgame_pb/core/provider.pb.h>
 
 #include "types.h"
+#include "event.h"
 
 namespace SailGame { namespace Common {
 
@@ -15,7 +16,7 @@ using Core::ProviderMsg;
 
 class EventLoopSubscriber {
 public:
-    virtual void OnEventProcessed(const ProviderMsgPtr &) = 0;
+    virtual void OnEventProcessed(const EventPtr &) = 0;
 };
 
 class EventLoop {
@@ -29,7 +30,6 @@ public:
     void StartLoop() {
         while (!mShouldStop) {
             if (!mEventQueue.empty()) {
-                // std::cout << "[EventLoop] Process Event: " << int(mEventQueue.front()->mType) << std::endl;
                 mSubscriber->OnEventProcessed(mEventQueue.front());
                 mEventQueue.pop();
             }
@@ -40,10 +40,9 @@ public:
         mShouldStop = true;
     }
 
-    void AppendEvent(const ProviderMsgPtr &event) {
+    void AppendEvent(const EventPtr &event) {
         // multiple threads may invoke this at the same time
         std::lock_guard<std::mutex> lock(mMutex);
-        // std::cout << "[EventLoop] Append Event: " << int(event->mType) << std::endl;
         mEventQueue.push(event);
     }
 
@@ -54,7 +53,7 @@ public:
     }
 
 private:
-    std::queue<ProviderMsgPtr> mEventQueue;
+    std::queue<EventPtr> mEventQueue;
     std::mutex mMutex;
     EventLoopSubscriber *mSubscriber{nullptr};
     bool mShouldStop{false};

@@ -1,6 +1,6 @@
 #include <sailgame/uno/card.h>
 
-namespace SailGame { namespace Game {
+namespace SailGame { namespace Uno {
 
 const std::set<CardColor> CardSet::NonWildColors = 
     { CardColor::RED, CardColor::YELLOW, CardColor::GREEN, CardColor::BLUE };
