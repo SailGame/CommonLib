@@ -4,7 +4,6 @@
 
 #include <sailgame_pb/core/provider.pb.h>
 #include <sailgame_pb/core/types.pb.h>
-#include <sailgame_pb/uno/uno.pb.h>
 
 namespace SailGame { namespace Common {
 
