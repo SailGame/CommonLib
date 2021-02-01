@@ -10,7 +10,6 @@
 namespace SailGame { namespace Common {
 
 using ::Core::BroadcastMsg;
-using ::Core::CloseGameArgs;
 using ::Core::OperationInRoomArgs;
 using ::Core::ProviderMsg;
 using ::Core::QueryStateArgs;
@@ -37,8 +36,6 @@ public:
                 return Transition(msg.registerret());
             case ProviderMsg::MsgCase::kStartGameArgs:
                 return Transition(msg.startgameargs());
-            case ProviderMsg::MsgCase::kCloseGameArgs:
-                return Transition(msg.closegameargs());
             case ProviderMsg::MsgCase::kQueryStateArgs:
                 return Transition(msg.querystateargs());
             case ProviderMsg::MsgCase::kUserOperationArgs:
@@ -52,8 +49,6 @@ protected:
     virtual ProviderMsgs Transition(const RegisterRet &) = 0;
 
     virtual ProviderMsgs Transition(const StartGameArgs &) = 0;
-
-    virtual ProviderMsgs Transition(const CloseGameArgs &) = 0;
 
     virtual ProviderMsgs Transition(const QueryStateArgs &) = 0;
 

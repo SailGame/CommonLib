@@ -34,6 +34,8 @@ public:
         return msg;
     }
 
+    static ProviderMsg CreateCloseGameArgs(int seqId, int roomId);
+
     static ProviderMsg CreateRegisterRet(int seqId, ErrorNumber err);
 
     template<typename StartGameSettingsT>
