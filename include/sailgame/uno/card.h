@@ -4,6 +4,7 @@
 #include <set>
 #include <algorithm>
 #include <random>
+#include <array>
 
 #include <sailgame_pb/uno/uno.pb.h>
 
