@@ -70,7 +70,10 @@ public:
 
     void Stop() { 
         if (mListenThread) {
-            mListenThread->join(); 
+            mShouldStop = true;
+            // mListenThread->join();
+            /// XXX: if inform Core to logout, can use join here
+            mListenThread->detach();
         }
     }
 
@@ -82,6 +85,7 @@ protected:
     ClientContext mContext;
     std::shared_ptr<GameCore::StubInterface> mStub;
     NetworkInterfaceSubscriber *mSubscriber{nullptr};
+    bool mShouldStop{false};
 
 private:
     std::unique_ptr<std::thread> mListenThread;

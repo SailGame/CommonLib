@@ -32,4 +32,14 @@ ProviderMsg ProviderMsgBuilder::CreateRegisterRet(
     return msg;
 }
 
+ProviderMsg ProviderMsgBuilder::CreateCloseGameArgs(int seqId, int roomId)
+{
+    ProviderMsg msg;
+    msg.set_sequenceid(seqId);
+    
+    auto args = msg.mutable_closegameargs();
+    args->set_roomid(roomId);
+
+    return msg;
+}
 }}
