@@ -47,6 +47,7 @@ add_custom_command(
     ARGS --grpc_out=generate_mock_code=true:"${pb_dir}"
     --cpp_out "${pb_dir}"
     -I "${proto_dir}"
+    -I "${_PROTOBUF_INCLUDE}"
     --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
     # here should be absolute path
     ${proto_files}
