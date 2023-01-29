@@ -14,7 +14,8 @@ using EventPtr = std::shared_ptr<Event>;
 
 enum class GameType {
     NoGame,  // which means in the room
-    Uno
+    Uno,
+    Texas
 };
 
 
