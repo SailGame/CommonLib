@@ -27,6 +27,7 @@ macro(import_grpc_by_submodule grpc_dir)
     else()
         set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:grpc_cpp_plugin>)
     endif()
+    set(_PROTOBUF_INCLUDE "${grpc_dir}/third_party/protobuf/src/")
 endmacro()
 
 # usage: import_grpc_by_fetchcontent(1.32.0)
