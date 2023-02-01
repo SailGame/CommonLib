@@ -76,6 +76,7 @@ public:
     static GameType GetGameTypeByGameName(const std::string &gameName) {
         static std::map<std::string, GameType> mapping{
             {"UNO", GameType::Uno},
+            {"Texas", GameType::Texas},
         };
 
         auto it = mapping.find(gameName);

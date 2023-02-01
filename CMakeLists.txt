@@ -12,28 +12,12 @@ set(CMAKE_BUILD_TYPE Debug)
 include(cmake/utils.cmake)
 include(cmake/grpc.cmake)
 
-option(BUILD_UNO_LIB OFF)
-option(BUILD_TEXAS_LIB OFF)
 option(IMPORT_GRPC_BY_SUBMODULE OFF)
 option(IMPORT_GRPC_BY_FETCHCONTENT OFF)
 
-# if this file is in top directory
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-    set(BUILD_UNO_LIB ON)
-    set(BUILD_TEXAS_LIB ON)
-endif()
-
 # Proto files
 set(proto_dir "${CMAKE_CURRENT_SOURCE_DIR}/proto")
-file(GLOB proto_files ${proto_dir}/core/*.proto)
-if(BUILD_UNO_LIB)
-    file(GLOB uno_proto_files ${proto_dir}/uno/*.proto)
-    list(APPEND proto_files ${uno_proto_files})
-endif()
-if(BUILD_TEXAS_LIB)
-    file(GLOB texas_proto_files ${proto_dir}/texas/*.proto)
-    list(APPEND proto_files ${texas_proto_files})
-endif()
+file(GLOB proto_files ${proto_dir}/**/*.proto)
 
 # Generated pb files
 set(pb_dir "${CMAKE_BINARY_DIR}/sailgame_pb")
@@ -47,6 +31,7 @@ add_custom_command(
     ARGS --grpc_out=generate_mock_code=true:"${pb_dir}"
     --cpp_out "${pb_dir}"
     -I "${proto_dir}"
+    -I "${_PROTOBUF_INCLUDE}"
     --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
     # here should be absolute path
     ${proto_files}
